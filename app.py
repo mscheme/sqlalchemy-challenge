@@ -46,11 +46,31 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start>/<end><br/>"
+        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/start/end<br/>"
     )
 
+@app.route("/api/v1.0/precipitation")
+def precipitation():
+    # Convert the query results to a dictionary using date as the key and prcp as the value.
+    # Return the JSON representation of your dictionary.
+    precip={}
+    # find the latest date in the data set
+    max_date = session.query(func.max(Measurement.date)).first()[0]
+
+    # subtract one year from the max date
+    prev_year_date = dt.datetime.strptime(max_date, '%Y-%m-%d') - relativedelta(years=1)
+
+    query_results = session.query(Measurement.date, Measurement.prcp).\
+        filter(Measurement.date >= prev_year_date).all()
+
+    for row in query_results:
+        date = (row[0])
+        prcp = (row[1])
+
+        precip[date] = prcp
     
+    return jsonify(precip)
 
 if __name__ == '__main__':
     app.run()
